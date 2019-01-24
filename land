@@ -1,0 +1,96 @@
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
+
+@Autonomous(name = "B||R land")
+public class delatch extends LinearOpMode {
+
+    public DcMotor frontRight;
+    public DcMotor frontLeft;
+    public DcMotor backLeft;
+    public DcMotor backRight;
+    public DcMotor leftLift;
+    public DcMotor rightLift;
+    public Servo flippyRelic;
+    double TICKS_PER_IN = 1120/(4*Math.PI);
+    public void driveDistance(double inches, double leftPower, double rightPower)
+    {
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        int leftTickGoal = frontLeft.getCurrentPosition () + (int) (TICKS_PER_IN * inches);
+        int rightTickGoal = frontRight.getCurrentPosition() + (int) (TICKS_PER_IN * inches);
+
+        frontLeft.setTargetPosition(leftTickGoal);
+        frontRight.setTargetPosition(rightTickGoal);
+
+        while( Math.abs(frontLeft.getCurrentPosition()) < leftTickGoal || Math.abs(frontRight.getCurrentPosition()) < rightTickGoal)
+        {
+
+            frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+            frontRight.setPower(rightPower);
+            frontLeft.setPower(leftPower);
+
+
+            backLeft.setPower(frontLeft.getPower());
+            backRight.setPower(frontRight.getPower());
+
+
+            telemetry.addData("Left Enc ", frontLeft.getCurrentPosition());
+            telemetry.addData("Right Enc ", frontRight.getCurrentPosition());
+            updateTelemetry(telemetry);
+            telemetry.update();
+        }
+
+
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        backLeft.setPower(0);
+        backRight.setPower(0);
+
+
+    }
+
+    @Override
+    public void runOpMode() throws InterruptedException {
+        frontRight = hardwareMap.dcMotor.get("frontRight");
+        frontLeft = hardwareMap.dcMotor.get("frontLeft");
+        backLeft = hardwareMap.dcMotor.get("backLeft");
+        backRight = hardwareMap.dcMotor.get("backRight");
+        leftLift = hardwareMap.dcMotor.get("leftLift");
+        rightLift = hardwareMap.dcMotor.get("rightLift");
+        flippyRelic = hardwareMap.servo.get("flippyRelic");
+
+        leftLift.setDirection(DcMotor.Direction.REVERSE);
+
+        waitForStart();
+        flippyRelic.setPosition(1.0);
+
+        rightLift.setPower(-.45);//robot going up on lift
+        leftLift.setPower(-.45);
+        sleep(4200);
+
+
+        rightLift.setPower(-.45);//drop down to floor
+        leftLift.setPower(-.45);
+        sleep(1500);
+
+        rightLift.setPower(0);//stop moving lift
+        leftLift.setPower(0);
+
+
+        driveDistance(5, .35, .35);//turn
+
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        backLeft.setPower(0);
+        backRight.setPower(0);
+
+
+    }
+}
